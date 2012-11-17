@@ -183,6 +183,29 @@ module Patron
       request(:copy, url, headers)
     end
 
+    # for work with binary files and couchdb
+    def put_attachment_to_couchdb url, data, headers
+      headers.merge!({"Accept" => "*/*; q=0.5, application/xml", "Accept-Encoding"=>"gzip, deflate"})
+      http_query :put, url, data, headers
+    end
+
+    def get_binary_data url
+      http_query :get, url
+    end
+
+    def http_query(method, url, data=nil, headers={})
+      uri = URI(url)
+      net = Net::HTTP.new(uri.host, uri.port)
+      req = net_http_request_class(method).new(url, headers)
+      net.start do |http|
+        http.request(req, data) { |http_response| http_response.read_body }
+      end
+    end
+
+    def net_http_request_class(method)
+      Net::HTTP.const_get(method.to_s.capitalize)
+    end
+
     ###################################################################
     ### Basic API methods
     ###
